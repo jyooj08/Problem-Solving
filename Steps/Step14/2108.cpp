@@ -6,11 +6,11 @@ using namespace std;
 int main()
 {
 	int n;
-	float k, sum=0;
+	double sum=0;
 	cin >> n;
 	
 	// counting sort
-	float histogram[8001] = {0,}; // index - 4000 is number
+	int histogram[8001] = {0,}; // index - 4000 is number
 	int arr[n];
 	for(int i=0;i<n;i++){
 		cin >> arr[i];
@@ -19,7 +19,7 @@ int main()
 	}
 	
 	//1
-	cout << round(sum/(float)n)<<endl;
+	cout << (int)round(sum/(double)n)<<endl; // 앞에 int 붙여줘야함 
 	
 	//2
 	sort(arr, arr+n);
