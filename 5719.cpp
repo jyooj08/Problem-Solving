@@ -11,51 +11,59 @@ int n, m;
 int start, dest;
 int from, to, len;
 
-int shortest_path(vector<pair<int, int> >* graph, int* last_node) {
-	//cout << "shortest path" << endl;
+int dijkstra(int** graph, vector<int>* path) {
 	int* dist = new int[n];
 	fill_n(dist, n, MAX);
-	priority_queue<pair<int, int>, vector<pair<int, int> >, greater<pair<int, int> > > pq;
+	priority_queue<pair<int, int> > pq;
 	pq.push({ 0,start });
-	last_node[start] = -1;
 	dist[start] = 0;
 
 	while (!pq.empty()) {
-		int current_node = pq.top().second;
+		int curr_cost = -pq.top().first;
+		int curr_node = pq.top().second;
 		pq.pop();
 
-		for (int i = 0; i < graph[current_node].size(); i++) {
-			int next_dist = graph[current_node][i].second;
-			int next_node = graph[current_node][i].first;
+		if (dist[curr_node] < curr_cost) continue;
 
-			if (dist[next_node] > dist[current_node] + next_dist) {
-				dist[next_node] = dist[current_node] + next_dist;
-				last_node[next_node] = current_node;
-				pq.push({ dist[next_node], next_node });
+		for (int next = 0; next < n; next++) {
+			if (graph[curr_node][next] == -1) continue;
+			int next_dist = curr_cost + graph[curr_node][next];
+
+			if (dist[next] > next_dist) {
+				dist[next] = next_dist;
+				pq.push({ -dist[next], next });
+
+				path[next].clear();
+				path[next].push_back(curr_node);
+			}
+			else if (dist[next] == next_dist) {
+				path[next].push_back(curr_node);
 			}
 		}
 	}
-
 	return dist[dest];
 }
 
-void erase_path(vector<pair<int, int> >* graph, int* last_node) {
-	//최단 경로 없애기
-	int to = dest;
-	int from = last_node[to];
-	while (from != -1) {
-
-		vector<pair<int, int> >::iterator iter;
-		for (iter = graph[from].begin(); iter != graph[from].end(); iter++) {
-			if ((*iter).first == to) {
-				graph[from].erase(iter);
-				break;
-			}
-		}
-		to = from;
-		from = last_node[to];
+void delete_path(int** graph, vector<int>* path) {
+	queue<pair<int, int> > q;
+	for (int e : path[dest]) {
+		q.push({ dest, e });
 	}
-	//cout << "end" << endl;
+
+	while (!q.empty()) {
+		int to = q.front().first;
+		int from = q.front().second;
+		q.pop();
+		
+		//cout << "delete [" << from << "," << to << "]\n";
+		graph[from][to] = -1;
+
+		for (int e : path[from]) {
+			//if (e == -1) continue;
+			q.push({ from, e });
+			//cout << "push {" << from << "," << e << "}\n";
+		}
+	}
 }
 
 int main()
@@ -65,22 +73,28 @@ int main()
 		if (n == 0 && m == 0) break;
 		cin >> start >> dest;
 
-		vector<pair<int, int> >* graph = new vector<pair<int, int> >[n];// node, weight
-		int* last_node = new int[n];
+		int** graph = new int* [n];
+		vector<int>* path = new vector<int>[n];
+
+		for (int i = 0; i < n; i++) {
+			graph[i] = new int[n];
+			fill_n(graph[i], n, -1);
+		}
+		
 
 		for (int i = 0; i < m; i++) {
 			cin >> from >> to >> len;
-			graph[from].push_back({ to, len });
+			graph[from][to] = len;
 		}
 
-		int min = shortest_path(graph, last_node); erase_path(graph, last_node);
-		while (min == shortest_path(graph, last_node)) {
-			erase_path(graph, last_node);
-		}
-		int answer = shortest_path(graph, last_node);
-		if (answer == MAX) answer = -1;
-		cout <<answer<< endl;
+		int result = dijkstra(graph, path);
+		delete_path(graph, path);
+		result = dijkstra(graph, path);
+		if (result == MAX) result = -1;
+		cout << result << endl;
 
+		delete[] path;
+		for (int i = 0; i < n; i++) delete[] graph[i]; delete[] graph;
 	}
 	return 0;
 }
